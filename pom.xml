@@ -55,6 +55,7 @@
 
     <properties>
         <resteasy.version>3.0.5.Final</resteasy.version>
+        <resteasy.bundle.version>${resteasy.version}-1.0.0-SNAPSHOT</resteasy.bundle.version>
     </properties>
 
     <scm>
@@ -71,6 +72,18 @@
                 <version>${resteasy.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jahia.modules</groupId>
+                <artifactId>resteasy-osgi-bundle-service-api</artifactId>
+                <version>${resteasy.bundle.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jahia.modules</groupId>
+                <artifactId>resteasy-osgi-bundle-core</artifactId>
+                <version>${resteasy.bundle.version}</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -91,7 +104,7 @@
     </repositories>
 
     <modules>
-        <module>resteasy-osgi-bundle</module>
+        <!--<module>resteasy-osgi-bundle</module>-->
         <module>jcrestapi</module>
     </modules>
 </project>

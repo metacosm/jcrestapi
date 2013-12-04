@@ -62,6 +62,23 @@
             <scope>provided</scope>
         </dependency>
         <!-- RESTeasy -->
+        <!-- OSGi bundle -->
+        <dependency>
+            <groupId>org.jahia.modules</groupId>
+            <artifactId>resteasy-osgi-bundle-service-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jahia.modules</groupId>
+            <artifactId>resteasy-osgi-bundle-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- API and implementation -->
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>jaxrs-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
@@ -134,8 +151,47 @@
                 <configuration>
                     <instructions>
                         <!--<Jahia-Depends>default</Jahia-Depends>-->
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Description>${project.description}</Bundle-Description>
+
+                        <Export-Package></Export-Package>
+                        <Private-Package>org.jahia.modules.jcrestapi.*</Private-Package>
+                        <Bundle-Activator>org.jahia.modules.jcrestapi.RESTEasyActivator</Bundle-Activator>
+
+                        <Require-Bundle>resteasy-osgi-bundle</Require-Bundle>
+
+                        <Import-Package>
+
+                            ,javax.servlet
+                            ,javax.servlet.http
+
+                            ,org.osgi.framework
+                            ,org.osgi.service.http
+                            ,org.osgi.util.tracker
+
+                            ,javax.ws.rs
+                            ,javax.ws.rs.core
+                            ,javax.ws.rs.ext
+
+                            ,*;resolution:=optional
+                        </Import-Package>
+
+
+                        <Embed-Dependency>*;scope=compile</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Embed-Directory>OSGI-INF/lib</Embed-Directory>
+                        <Bundle-ClassPath>.</Bundle-ClassPath>
                     </instructions>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>

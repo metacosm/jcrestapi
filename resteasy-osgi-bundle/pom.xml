@@ -27,18 +27,9 @@
                     <artifactId>activation</artifactId>
                     <groupId>javax.activation</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>jaxrs-api</artifactId>
-                    <groupId>org.jboss.resteasy</groupId>
-                </exclusion>
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>jaxrs-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jackson2-provider</artifactId>
@@ -66,9 +57,9 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Description>${project.description}</Bundle-Description>
 
-                        <Export-Package>!javassist.*,!javax.*,*</Export-Package>
+                        <Export-Package>javax.ws.rs,!javassist.*,!javax.*,*</Export-Package>
 
-                        <Import-Package>javax.ws.rs,*;resolution:=optional</Import-Package>
+                        <Import-Package>*;resolution:=optional</Import-Package>
                         <Embed-Dependency>*;scope=compile</Embed-Dependency>
 
                         <Embed-Transitive>true</Embed-Transitive>
