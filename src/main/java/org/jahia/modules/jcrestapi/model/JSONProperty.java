@@ -113,22 +113,25 @@ public class JSONProperty extends JSONItem<Property> {
         this.multiValued = property.isMultiple();
         if (multiValued) {
             final Value[] values = property.getValues();
-            value = new Object[values.length];
-            String[] links = null;
-            if (reference) {
-                links = new String[values.length];
-            }
-
-            for (int i = 0; i < values.length; i++) {
-                final Value val = values[i];
-                ((Object[]) value)[i] = convertValue(val);
+            final int valuesNb = values.length;
+            value = new Object[valuesNb];
+            if (valuesNb > 0) {
+                String[] links = null;
                 if (reference) {
-                    links[i] = getTargetLink(val.getString(), type);
+                    links = new String[valuesNb];
                 }
-            }
 
-            if (reference) {
-                addLink(JSONLink.createLink(API.TARGET, links));
+                for (int i = 0; i < valuesNb; i++) {
+                    final Value val = values[i];
+                    ((Object[]) value)[i] = convertValue(val);
+                    if (reference) {
+                        links[i] = getTargetLink(val.getString(), type);
+                    }
+                }
+
+                if (reference) {
+                    addLink(JSONLink.createLink(API.TARGET, links));
+                }
             }
         } else {
             this.value = convertValue(property.getValue());
