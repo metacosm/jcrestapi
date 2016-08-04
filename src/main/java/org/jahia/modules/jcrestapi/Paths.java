@@ -125,6 +125,7 @@ public class Paths extends API {
 
     @GET
     @Path("/{path: .*}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Object get(@PathParam("path") String path,
                       @Context UriInfo context) {
         return performByPath(context, READ, null);
