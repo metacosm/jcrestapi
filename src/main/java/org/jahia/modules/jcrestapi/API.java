@@ -165,6 +165,11 @@ public class API {
                     throw new RuntimeException("Couldn't access primary node type of " + child, e);
                 }
             }
+
+            @Override
+            public boolean outputVersions() {
+                return false;
+            }
         };
 
     }
