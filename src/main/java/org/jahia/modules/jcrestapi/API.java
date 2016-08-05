@@ -205,6 +205,10 @@ public class API {
     public API(String workspace, String language, Repository repository, UriInfo context) {
         this.workspace = workspace;
         this.language = language;
+        if((workspace == null && language != null) || (workspace != null && language == null)) {
+            throw new IllegalArgumentException("Either *both* workspace and language must be provided or neither. Was" +
+                    " provided: (workspace=" + workspace + ", language=" + language + ")");
+        }
         this.repository = repository;
         if (context != null) {
             URIUtils.setBaseURI(context.getBaseUri().toASCIIString());
@@ -267,6 +271,13 @@ public class API {
     @Produces(MediaType.APPLICATION_JSON)
     public JSONVersion jsonVersion() {
         return JSON_VERSION;
+    }
+
+    @POST
+    @Path("/query")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Object query(JSONQuery jsonQuery, @Context UriInfo context) {
+        return query(null, null, jsonQuery, context);
     }
 
     @POST
@@ -344,16 +355,41 @@ public class API {
     }
 
     /**
-     * Retrieves the sub-resources in charge of handling requests accessing resources by their identifiers.
+     * Retrieves the sub-resources in charge of handling requests accessing resources by their identifiers using the
+     * default workspace and the default language.
      *
-     * @param workspace the JCR workspace that we want to access
-     * @param language  the language code in which we want to retrieve the data
      * @param context   a UriInfo instance, automatically injected, providing context about the request URI
      * @return a Nodes instance configured to access JCR data from the specified workspace and language
      */
+    @Path("/" + Nodes.MAPPING)
+    public Nodes getNodes(@Context UriInfo context) {
+        return getNodes(null, null, context);
+    }
+
+        /**
+         * Retrieves the sub-resources in charge of handling requests accessing resources by their identifiers.
+         *
+         * @param workspace the JCR workspace that we want to access
+         * @param language  the language code in which we want to retrieve the data
+         * @param context   a UriInfo instance, automatically injected, providing context about the request URI
+         * @return a Nodes instance configured to access JCR data from the specified workspace and language
+         */
     @Path("/{workspace}/{language}/" + Nodes.MAPPING)
     public Nodes getNodes(@PathParam("workspace") String workspace, @PathParam("language") String language, @Context UriInfo context) {
         return new Nodes(workspace, language, repository, context);
+    }
+
+    /**
+     * Retrieves the sub-resources in charge of handling requests accessing resources by their types using the
+     * default workspace and the default language.
+     *
+     * @param context   a UriInfo instance, automatically injected, providing context about the request URI
+     * @return a Types instance configured to access JCR data from the specified workspace and language
+     * @deprecated Use query endpoint instead
+     */
+    @Path("/" + Types.MAPPING)
+    public Types getByType(@Context UriInfo context) {
+        return getByType(null, null, context);
     }
 
     /**
@@ -368,6 +404,18 @@ public class API {
     @Path("/{workspace}/{language}/" + Types.MAPPING)
     public Types getByType(@PathParam("workspace") String workspace, @PathParam("language") String language, @Context UriInfo context) {
         return new Types(workspace, language, repository, context);
+    }
+
+    /**
+     * Retrieves the sub-resources in charge of handling requests accessing resources by their paths using the
+     * default workspace and the default language.
+     *
+     * @param context   a UriInfo instance, automatically injected, providing context about the request URI
+     * @return a Types instance configured to access JCR data from the specified workspace and language
+     */
+    @Path("/" + Paths.MAPPING)
+    public Paths getByPath(@Context UriInfo context) {
+        return getByPath(null, null, context);
     }
 
     /**
@@ -473,18 +521,11 @@ public class API {
     }
 
     protected Session getSession(String workspace, String language) throws RepositoryException {
-        if (!Utils.exists(workspace)) {
-            workspace = "default";
-        }
-
-        if (!Utils.exists(language)) {
-            language = "en"; // todo: retrieve configured default language if possible
-        }
-
         Session session;
         if (repository instanceof JCRSessionFactory) {
             JCRSessionFactory factory = (JCRSessionFactory) repository;
-            session = factory.getCurrentUserSession(workspace, LanguageCodeConverters.languageCodeToLocale(language), Locale.ENGLISH);
+            final Locale locale = language != null ? LanguageCodeConverters.languageCodeToLocale(language) : null;
+            session = factory.getCurrentUserSession(workspace, locale, Locale.ENGLISH);
         } else if (repository.getClass().getName().equals("org.jahia.modules.jcrestapi.NoLoggingTransientRepository")) {
             // only the case for the execution of our tests
             session = repository.login(null, null);

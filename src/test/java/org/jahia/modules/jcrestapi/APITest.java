@@ -404,6 +404,17 @@ public class APITest extends JerseyTest {
     }
 
     @Test
+    public void checkWorkspaceAndLanguageAreNotNeeded() {
+        expect().statusCode(SC_OK)
+                .contentType("application/hal+json")
+                .body(
+                        "name", equalTo("jcr:system"),
+                        "type", equalTo("rep:system")
+                )
+                .when().get(generateURL(API.API_PATH + "/paths/jcr__system"));
+    }
+
+    @Test
     public void testQuery() {
         // query is disabled by default
         given()

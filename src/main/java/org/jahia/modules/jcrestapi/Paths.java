@@ -71,13 +71,27 @@ public class Paths extends API {
 
     static final String MAPPING = "paths";
 
+    private final int ignoredSegmentsNb;
+
     /**
-     * Records how many segments in API.API_PATH/{workspace}/{language}/Paths.MAPPING must be ignored to get actual path
+     * Records how many segments in API.API_PATH/Paths.MAPPING must be ignored *at least* to get actual path
      */
-    private static final int IGNORE_SEGMENTS = getSegmentsNbFrom(API.API_PATH) + 2 + getSegmentsNbFrom(MAPPING);
+    private static final int DEFAULT_IGNORE_SEGMENTS = getSegmentsNbFrom(API.API_PATH) + getSegmentsNbFrom(MAPPING);
+
+    /**
+     * Retrieves the actual number of ignored segments based on whether the user provided a workspace and a language
+     * or not.
+     *
+     * @return the numbers of segments that need to be ignored to get the actual path
+     */
+    private int getIgnoredSegmentsNb() {
+        return ignoredSegmentsNb;
+    }
 
     public Paths(String workspace, String language, Repository repository, UriInfo context) {
         super(workspace, language, repository, context);
+        // super checks that either both workspace and language are provided or neither
+        ignoredSegmentsNb = workspace == null ? DEFAULT_IGNORE_SEGMENTS : DEFAULT_IGNORE_SEGMENTS + 2;
     }
 
     private Object performByPath(UriInfo context, String operation, Object data) {
@@ -118,8 +132,21 @@ public class Paths extends API {
             index++;
         }
 
-        // todo: check
-        return perform(workspace, language, computePathUpTo(usefulSegments, usefulSegments.size()), "", "", context, operation, null, NodeAccessor.BY_PATH);
+        JSONItem jsonItem = null;
+        final String nodePath = computePathUpTo(usefulSegments, usefulSegments.size());
+        if (data != null) {
+            try {
+                if (data instanceof String) {
+                    jsonItem = ElementAccessor.attemptToConvert((String) data);
+                } else {
+                    throw new APIException(new IllegalArgumentException("Unsupported payload type"), operation,
+                            NodeAccessor.BY_PATH.getType(), nodePath, null, null, data);
+                }
+            } catch (Exception e) {
+                throw new APIException(e.getCause(), operation, NodeAccessor.BY_PATH.getType(), nodePath, null, null, data);
+            }
+        }
+        return perform(workspace, language, nodePath, "", "", context, operation, jsonItem, NodeAccessor.BY_PATH);
     }
 
     @GET
@@ -167,7 +194,7 @@ public class Paths extends API {
             nbOfEmptySegments++;
         }
 
-        for (int fromIndex = IGNORE_SEGMENTS + nbOfEmptySegments; fromIndex < pathSegments.size(); fromIndex++) {
+        for (int fromIndex = getIgnoredSegmentsNb() + nbOfEmptySegments; fromIndex < pathSegments.size(); fromIndex++) {
             final PathSegment pathSegment = pathSegments.get(fromIndex);
             final String path = pathSegment.getPath();
             if (!path.isEmpty() && !MAPPING.equals(path)) {

@@ -43,9 +43,11 @@
  */
 package org.jahia.modules.jcrestapi.accessors;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -53,18 +55,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.jahia.modules.jcrestapi.API;
+import org.jahia.modules.jcrestapi.APIException;
 import org.jahia.modules.jcrestapi.URIUtils;
 import org.jahia.modules.jcrestapi.Utils;
 import org.jahia.modules.jcrestapi.json.APIObjectFactory;
 import org.jahia.modules.jcrestapi.links.APIDecorator;
-import org.jahia.modules.json.JSONItem;
-import org.jahia.modules.json.JSONNamed;
-import org.jahia.modules.json.JSONNode;
-import org.jahia.modules.json.JSONSubElementContainer;
+import org.jahia.modules.json.*;
 
 
 /**
@@ -97,6 +98,22 @@ public abstract class ElementAccessor<C extends JSONSubElementContainer<APIDecor
     protected abstract void delete(Node node, String subElement) throws RepositoryException;
 
     protected abstract CreateOrUpdateResult<T> createOrUpdate(Node node, String subElement, U childData) throws RepositoryException;
+
+    public static JSONItem attemptToConvert(String rawJSONData) throws Exception {
+        JSONItem result;
+        try {
+            // first attempt to deserialize as JSONNode
+            result = mapper.readValue(rawJSONData, JSONNode.class);
+        } catch (JsonProcessingException e) {
+            // if given JSON didn't match a JSONNode, attempt as a JSONProperty
+            try {
+                result = mapper.readValue(rawJSONData, JSONProperty.class);
+            } catch (JsonProcessingException ex) {
+                throw new IllegalArgumentException("Couldn't deserialize given string as JSON");
+            }
+        }
+        return result;
+    }
 
     public JSONItem convertFrom(String rawJSONData) throws Exception {
         return reader.readValue(rawJSONData);
